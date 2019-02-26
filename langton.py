@@ -57,7 +57,7 @@ def recolor(pos, color):
     if color == white:
         bset.discard(pos)
         
-defaultopen = (check_clr, recolor)
+default = (check_clr, recolor)
 
 class ant:
     
@@ -94,7 +94,7 @@ class ant:
 
 class OpenWorld:
     
-    def __init__(self, setting=defaultopen):
+    def __init__(self, setting=default):
         self.antlist = []
         self.check_clr, self.recolor = setting
     
@@ -107,10 +107,24 @@ class OpenWorld:
         
     def steps(self, times=1):
         [self.step() for _ in range(times)]
+        
+    def ani_gen(self, path, title="", cmap='binary', duration=3e2):
+        bset.clear()
+        fig, ax = plt.subplots(1, figsize=(4, 4), facecolor=(1,1,1))
+        def make_frame(t):
+            ax.clear()
+            ax.axis('off')
+            ax.set_title(title, fontsize=16)
+            self.step()
+            ax.imshow(into_array(bset),cmap=cmap,animated=True)
+            return(mplfig_to_npimage(fig))
+        ani = VideoClip(make_frame, duration = duration)
+        ani.write_videofile(path, fps=50)
+        return
 
 class ClosedWorld:
     
-    def __init__(self, xrange, yrange, boundary):
+    def __init__(self, xrange, yrange, boundary='wrapped'):
         self.ranges = (xrange, yrange)
         self.grid = np.zeros((yrange, xrange))
         self.boundary = boundary
@@ -136,31 +150,17 @@ class ClosedWorld:
     
     def plot(self, ax, cmap):
         ax.imshow(self.grid,cmap=cmap,animated=True)
-
-def ani_gen_open(world, path, title="", cmap='binary', duration=3e2):
-    bset.clear()
-    fig, ax = plt.subplots(1, figsize=(4, 4), facecolor=(1,1,1))
-    def make_frame(t):
-        ax.clear()
-        ax.axis('off')
-        ax.set_title(title, fontsize=16)
-        world.step()
-        ax.imshow(into_array(bset),cmap=cmap,animated=True)
-        return(mplfig_to_npimage(fig))
-    ani = VideoClip(make_frame, duration = duration)
-    ani.write_videofile(path, fps=50)
-    return
-
-def ani_gen_closed(world, path, title="", cmap='binary', duration=3e2):
-    bset.clear()
-    fig, ax = plt.subplots(1, figsize=(4, 4), facecolor=(1,1,1))
-    def make_frame(t):
-        ax.clear()
-        ax.axis('off')
-        ax.set_title(title, fontsize=16)
-        world.step()
-        world.plot(ax,cmap)
-        return(mplfig_to_npimage(fig))
-    ani = VideoClip(make_frame, duration = duration)
-    ani.write_videofile(path, fps=50)
-    return
+        
+    def ani_gen(self, path, title="", cmap='binary', duration=3e2):
+        bset.clear()
+        fig, ax = plt.subplots(1, figsize=(4, 4), facecolor=(1,1,1))
+        def make_frame(t):
+            ax.clear()
+            ax.axis('off')
+            ax.set_title(title, fontsize=16)
+            self.step()
+            self.plot(ax,cmap)
+            return(mplfig_to_npimage(fig))
+        ani = VideoClip(make_frame, duration = duration)
+        ani.write_videofile(path, fps=50)
+        return
